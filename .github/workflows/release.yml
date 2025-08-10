@@ -1,9 +1,9 @@
-name: Build and Release Portable App
+name: Build Portable Flask App
 
 on:
-  push:
-    tags:
-      - 'v*'
+  push:        
+    branches:
+      - main   
 
 jobs:
   build:
@@ -15,7 +15,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.13.5'
 
       - name: Install dependencies
         run: |
@@ -27,9 +27,8 @@ jobs:
         run: |
           pyinstaller --onefile run.py --name MyFlaskApp --add-data "templates;templates" --add-data "static;static"
 
-      - name: Upload EXE to Release
-        uses: softprops/action-gh-release@v2
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
         with:
-          files: dist/MyFlaskApp.exe
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: MyFlaskApp
+          path: dist/MyFlaskApp.exe
