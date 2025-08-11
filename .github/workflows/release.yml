@@ -42,17 +42,16 @@ jobs:
         shell: pwsh
         run: Set-Content -Path launch-win.bat -Value ("@echo off`ncd /d ""%~dp0""`npython-win\python.exe run.py")
 
+      - name: Remove unnecessary files
+        shell: pwsh
+        run: |
+          Remove-Item -Recurse -Force .git, .github, __pycache__ -ErrorAction SilentlyContinue
+          Remove-Item requirements.txt, .gitignore, python-win.zip, get-pip.py, medi.zip -Force -ErrorAction SilentlyContinue
+
       - name: Create portable zip
         shell: pwsh
         run: |
-          Get-ChildItem -Path . -Recurse |
-            Where-Object {
-              $_.FullName -notmatch '\\.git($|\\)' -and
-              $_.FullName -notmatch '\\.github($|\\)' -and
-              $_.FullName -notmatch '__pycache__' -and
-              $_.Name -notin @('requirements.txt', '.gitignore', 'medi.zip', 'python-win.zip', 'get-pip.py')
-            } |
-            Compress-Archive -DestinationPath medi.zip
+          Compress-Archive -Path * -DestinationPath medi.zip
 
       - name: Upload to 'Latest' release
         uses: svenstaro/upload-release-action@v2
