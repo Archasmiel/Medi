@@ -45,9 +45,14 @@ jobs:
       - name: Create portable zip
         shell: pwsh
         run: |
-          Remove-Item python-win.zip -Force -ErrorAction SilentlyContinue
-          Remove-Item get-pip.py -Force -ErrorAction SilentlyContinue
-          Compress-Archive -Path * -DestinationPath medi.zip
+          Get-ChildItem -Path . -Recurse |
+            Where-Object {
+              $_.FullName -notmatch '\\.git($|\\)' -and
+              $_.FullName -notmatch '\\.github($|\\)' -and
+              $_.FullName -notmatch '__pycache__' -and
+              $_.Name -notin @('requirements.txt', '.gitignore', 'medi.zip', 'python-win.zip', 'get-pip.py')
+            } |
+            Compress-Archive -DestinationPath medi.zip
 
       - name: Upload to 'Latest' release
         uses: svenstaro/upload-release-action@v2
