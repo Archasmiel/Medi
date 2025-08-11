@@ -48,10 +48,16 @@ jobs:
           Remove-Item -Recurse -Force .git, .github, __pycache__, subscripts -ErrorAction SilentlyContinue
           Remove-Item requirements.txt, .gitignore, python-win.zip, get-pip.py, medi.zip -Force -ErrorAction SilentlyContinue
 
+      - name: Move files to one directory
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path medi | Out-Null
+          Get-ChildItem -Force | Where-Object { $_.Name -ne 'medi' } | Move-Item -Destination medi
+
       - name: Create portable zip
         shell: pwsh
         run: |
-          Compress-Archive -Path * -DestinationPath medi.zip
+          Compress-Archive -Path medi -DestinationPath medi.zip
 
       - name: Upload to 'Latest' release
         uses: svenstaro/upload-release-action@v2
