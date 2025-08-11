@@ -1,13 +1,13 @@
 from flask import Flask
 from dotenv import load_dotenv
-import os
+import os, secrets
 
 
 class Config:
     load_dotenv()
-    DEBUG = os.getenv('DEBUG', '1') == '1'
-    SECRET_KEY = os.getenv('SECRET_KEY', None)
-    SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
+    DEBUG = True
+    SECRET_KEY = secrets.token_hex(32)
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///app.db'
 
 
 class DevConfig(Config):

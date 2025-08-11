@@ -21,4 +21,4 @@ def add_user(name):
     new_user = User(name=name)
     db.session.add(new_user)
     db.session.commit()
-    return f'User {name} added!'
+    return render_template('user_add.html', name=name)

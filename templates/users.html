@@ -28,6 +28,7 @@
 </head>
 <body>
     <h1>Users</h1>
+    <a href="{{ url_for('basic.home') }}">Home</a>
 
     {% if users %}
     <table>
@@ -45,5 +46,6 @@
     {% else %}
         <p>No users found.</p>
     {% endif %}
+    
 </body>
 </html>
