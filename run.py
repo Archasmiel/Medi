@@ -12,6 +12,8 @@ def open_browser():
     webbrowser.open("http://127.0.0.1:7777/")
 
 if __name__ == "__main__":
+    print("> If there's several register calls, dont worry!")
+
     env = os.environ.copy()
     env["FLASK_APP"] = "run.py"
     if not os.path.exists(MIGRATIONS_DIR):
@@ -20,6 +22,7 @@ if __name__ == "__main__":
     subprocess.run([PYTHON_EXE, "-m", "flask", "db", "migrate"], check=True, env=env)
     subprocess.run([PYTHON_EXE, "-m", "flask", "db", "upgrade"], check=True, env=env)
 
+    print("> Starting browser in 3 seconds...")
     threading.Thread(target=open_browser).start()
 
     app.run(host="0.0.0.0", port=7777, use_reloader=False)

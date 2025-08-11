@@ -14,4 +14,4 @@ def register(app: Flask):
             func = getattr(module, "register", None)
             if callable(func):
                 func(app)
-                print(f'Registered \'{module_name}\' service')
+                print(f'> Registered \'{module_name}\' service')

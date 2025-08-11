@@ -14,4 +14,4 @@ def register(app: Flask):
             bp = getattr(module, "bp", None)
             if isinstance(bp, Blueprint):
                 app.register_blueprint(bp)
-                print(f'Registered \'{module_name}\' routes collection')
+                print(f'> Registered \'{module_name}\' routes collection')
