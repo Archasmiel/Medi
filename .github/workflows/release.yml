@@ -15,28 +15,54 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download Portable Python
+      - name: Creating portable python
         shell: pwsh
         run: |
-          Invoke-WebRequest https://www.python.org/ftp/python/3.13.5/python-3.13.5-embed-amd64.zip -OutFile python-win.zip
-          Expand-Archive python-win.zip -DestinationPath python-win
+          $pythonVer = "3.13.5"
+          $pythonUrl = "https://www.python.org/ftp/python/$pythonVer/python-$pythonVer-embed-amd64.zip"
+          $pipUrl = "https://bootstrap.pypa.io/get-pip.py"
+          $tempPath = ".\temp"
 
-      - name: Configure _pth
-        shell: pwsh
-        run: |
+          # Create neccessary folders
+          if (-Not (Test-Path $tempPath)) {
+              New-Item -ItemType Directory -Path $tempPath | Out-Null
+          }
+
+          # Set temporary location as main
+          Set-Location $tempPath
+
+          # Download+Unpack Python and save it to temporary folder
+          Write-Host "> Downloading Python v$pythonVer..."
+          Invoke-WebRequest -Uri $pythonUrl -OutFile "python-$pythonVer-embed.zip"
+          Write-Host "> Unpacking Python..."
+          Expand-Archive -Path "python-$pythonVer-embed.zip" -DestinationPath ".\python-win"
+
+          # Write _pth file to make portable
           $pthFile = (Get-ChildItem python-win -Filter "python*._pth" | Select-Object -First 1).FullName
           $zipName = (Get-ChildItem python-win -Filter "python*.zip" | Select-Object -First 1).Name
-          Set-Content -Path $pthFile -Value ("$zipName`n..`nlibs`nimport site")
+          Set-Content -Path $pthFile -Value @"
+          $zipName
+          ..
+          libs
+          import site
+          "@
 
-      - name: Install pip
-        shell: pwsh
-        run: |
-          Invoke-WebRequest https://bootstrap.pypa.io/get-pip.py -OutFile get-pip.py
+          # Download and install pip
+          Write-Host "> Downloading pip..."
+          Invoke-WebRequest -Uri $pipUrl -OutFile "get-pip.py"
+          Write-Host "> Installing pip..."
           python-win/python.exe get-pip.py
-      
-      - name: Install dependencies
-        shell: pwsh
-        run: if (Test-Path requirements.txt) { python-win/python.exe -m pip install -r requirements.txt --target python-win/libs }
+
+          # Download requirements.txt
+          Write-Host "> Downloading requirements..."
+          python-win/python.exe -m pip install -r ../requirements.txt --target python-win/libs
+
+          # Moving python-portable folder to project
+          Move-Item -Path ".\python-win" -Destination "..\python-win" -Force
+
+          # Cleaning 
+          Set-Location ".."
+          Remove-Item -Path $tempPath -Recurse
 
       - name: Create portable launch file
         shell: pwsh
@@ -45,8 +71,11 @@ jobs:
       - name: Remove unnecessary files
         shell: pwsh
         run: |
-          Remove-Item -Recurse -Force .git, .github, __pycache__, subscripts -ErrorAction SilentlyContinue
-          Remove-Item requirements.txt, .gitignore, python-win.zip, get-pip.py, medi.zip -Force -ErrorAction SilentlyContinue
+          Write-Host "> Cleaning unnecessary files..."
+          $toRemove = @('.git', '.github', '__pycache__', 'subscripts', '.gitignore', 'python-win.zip', 'get-pip.py', 'medi.zip', 'requirements.txt')
+          foreach ($item in $toRemove) {
+            if (Test-Path $item) { Remove-Item -Recurse -Force $item -ErrorAction SilentlyContinue }
+          }
 
       - name: Move files to one directory
         shell: pwsh
@@ -57,14 +86,21 @@ jobs:
       - name: Create portable zip
         shell: pwsh
         run: |
-          Compress-Archive -Path medi -DestinationPath medi.zip
+          Compress-Archive -Path medi -DestinationPath medi.zip -Force
+
+      - name: Delete old Latest release
+        uses: dev-drprasad/delete-tag-and-release@v1.0
+        with:
+          tag_name: latest
+          delete_release: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload to 'Latest' release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: medi.zip
-          asset_name: medi.zip
+          file: c_learn.zip
+          asset_name: c_learn.zip
           tag: latest
           release_name: Latest
           overwrite: true
