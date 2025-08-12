@@ -18,51 +18,8 @@ jobs:
       - name: Creating portable python
         shell: pwsh
         run: |
-          $pythonVer = "3.13.5"
-          $pythonUrl = "https://www.python.org/ftp/python/$pythonVer/python-$pythonVer-embed-amd64.zip"
-          $pipUrl = "https://bootstrap.pypa.io/get-pip.py"
-          $tempPath = ".\temp"
-
-          # Create neccessary folders
-          if (-Not (Test-Path $tempPath)) {
-              New-Item -ItemType Directory -Path $tempPath | Out-Null
-          }
-
-          # Set temporary location as main
-          Set-Location $tempPath
-
-          # Download+Unpack Python and save it to temporary folder
-          Write-Host "> Downloading Python v$pythonVer..."
-          Invoke-WebRequest -Uri $pythonUrl -OutFile "python-$pythonVer-embed.zip"
-          Write-Host "> Unpacking Python..."
-          Expand-Archive -Path "python-$pythonVer-embed.zip" -DestinationPath ".\python-win"
-
-          # Write _pth file to make portable
-          $pthFile = (Get-ChildItem python-win -Filter "python*._pth" | Select-Object -First 1).FullName
-          $zipName = (Get-ChildItem python-win -Filter "python*.zip" | Select-Object -First 1).Name
-          Set-Content -Path $pthFile -Value @"
-          $zipName
-          ..
-          libs
-          import site
-          "@
-
-          # Download and install pip
-          Write-Host "> Downloading pip..."
-          Invoke-WebRequest -Uri $pipUrl -OutFile "get-pip.py"
-          Write-Host "> Installing pip..."
-          python-win/python.exe get-pip.py
-
-          # Download requirements.txt
-          Write-Host "> Downloading requirements..."
-          python-win/python.exe -m pip install -r ../requirements.txt --target python-win/libs
-
-          # Moving python-portable folder to project
-          Move-Item -Path ".\python-win" -Destination "..\python-win" -Force
-
-          # Cleaning 
-          Set-Location ".."
-          Remove-Item -Path $tempPath -Recurse
+          Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
+          .\install_portable_python.ps1
 
       - name: Create portable launch file
         shell: pwsh
@@ -72,21 +29,19 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "> Cleaning unnecessary files..."
-          $toRemove = @('.git', '.github', '__pycache__', 'subscripts', '.gitignore', 'python-win.zip', 'get-pip.py', 'medi.zip', 'requirements.txt')
+          $toRemove = @('.git', '.github', '__pycache__', 'subscripts', '.gitignore', 'requirements.txt', 'install_portable_python.ps1')
           foreach ($item in $toRemove) {
             if (Test-Path $item) { Remove-Item -Recurse -Force $item -ErrorAction SilentlyContinue }
           }
 
-      - name: Move files to one directory
+      - name: Move files to portable directory and create archive
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Path medi | Out-Null
-          Get-ChildItem -Force | Where-Object { $_.Name -ne 'medi' } | Move-Item -Destination medi
-
-      - name: Create portable zip
-        shell: pwsh
-        run: |
-          Compress-Archive -Path medi -DestinationPath medi.zip -Force
+          $repoName = "${{ github.repository }}".Split('/')[1]
+          New-Item -ItemType Directory -Path $repoName | Out-Null
+          Get-ChildItem -Force | Where-Object { $_.Name -ne '$repoName' } | Move-Item -Destination $repoName
+          Write-Host "> Creating $repoName.zip..."
+          Compress-Archive -Path $repoName -DestinationPath "$repoName.zip" -Force
 
       - name: Delete old Latest release
         uses: dev-drprasad/delete-tag-and-release@v1.0
