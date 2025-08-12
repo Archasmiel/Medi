@@ -39,7 +39,7 @@ jobs:
         run: |
           $repoName = "${{ github.repository }}".Split('/')[1]
           New-Item -ItemType Directory -Path $repoName | Out-Null
-          Get-ChildItem -Force | Where-Object { $_.Name -ne '$repoName' } | Move-Item -Destination $repoName
+          Get-ChildItem -Force | Where-Object { $_.Name -ne $repoName } | Move-Item -Destination $repoName
           Write-Host "> Creating $repoName.zip..."
           Compress-Archive -Path $repoName -DestinationPath "$repoName.zip" -Force
 
