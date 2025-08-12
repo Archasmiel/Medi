@@ -29,7 +29,7 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "> Cleaning unnecessary files..."
-          $toRemove = @('.git', '.github', '__pycache__', 'subscripts', '.gitignore', 'requirements.txt', 'install_portable_python.ps1')
+          $toRemove = @('.git', '.github', '__pycache__', 'subscripts', '.gitignore', 'README.md', 'requirements.txt', 'install_portable_python.ps1')
           foreach ($item in $toRemove) {
             if (Test-Path $item) { Remove-Item -Recurse -Force $item -ErrorAction SilentlyContinue }
           }
